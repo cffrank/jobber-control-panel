@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobber Tools Agent Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 0;
+        }
+        .btn {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        .loading {
+            display: none;
+            margin: 20px auto;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+        .webhook-url {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .settings-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .save-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .save-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jobber Tools Agent Control Panel</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Server Configuration</h2>
+            <p>Enter your n8n server URL to connect to your Jobber Tools Agent:</p>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="n8nServerUrl">n8n Server URL:</label>
+                    <input type="text" id="n8nServerUrl" class="form-control" placeholder="https://your-n8n-server.com">
+                </div>
+                <button id="saveSettingsBtn" class="save-btn">Save Settings</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Initial Sync</h2>
+            <p>Perform a full synchronization of all data from Jobber to your SQL database. This will replace all existing data.</p>
+            <p><strong>Warning:</strong> This operation will clear all existing tables before importing new data.</p>
+            
+            <button id="initialSyncBtn" class="btn btn-warning">Run Initial Sync</button>
+            
+            <div id="initialSyncLoading" class="loading"></div>
+            
+            <div id="initialSyncStatus" class="status">
+                <h3 id="initialSyncTitle"></h3>
+                <pre id="initialSyncDetails"></pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Webhook Configuration</h2>
+            <p>Configure your Jobber webhooks to send data changes to the following URL:</p>
+            
+            <div class="webhook-url" id="webhookUrl">Please set your n8n server URL first</div>
+            
+            <p>Recommended webhooks to enable in Jobber:</p>
+            <table>
+                <tr>
+                    <th>Event</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>client.created</td>
+                    <td>Triggered when a new client is created</td>
+                </tr>
+                <tr>
+                    <td>client.updated</td>
+                    <td>Triggered when client information is modified</td>
+                </tr>
+                <tr>
+                    <td>job.created</td>
+                    <td>Triggered when a new job is created</td>
+                </tr>
+                <tr>
+                    <td>job.updated</td>
+                    <td>Triggered when job information is modified</td>
+                </tr>
+                <tr>
+                    <td>invoice.created</td>
+                    <td>Triggered when a new invoice is created</td>
+                </tr>
+                <tr>
+                    <td>invoice.updated</td>
+                    <td>Triggered when invoice information is modified</td>
+                </tr>
+                <tr>
+                    <td>quote.created</td>
+                    <td>Triggered when a new quote is created</td>
+                </tr>
+                <tr>
+                    <td>quote.updated</td>
+                    <td>Triggered when quote information is modified</td>
+                </tr>
+                <tr>
+                    <td>visit.created</td>
+                    <td>Triggered when a new visit is created</td>
+                </tr>
+                <tr>
+                    <td>visit.updated</td>
+                    <td>Triggered when visit information is modified</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Sync Status</h2>
+            <p>View recent synchronization activity:</p>
+            
+            <button id="refreshStatusBtn" class="btn btn-success">Refresh Status</button>
+            
+            <div id="syncStatusLoading" class="loading"></div>
+            
+            <div id="syncStatusContent">
+                <p>Click 'Refresh Status' to load recent sync operations.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const WEBHOOK_PATH = '/webhook/jobber-webhook';
+        const INITIAL_SYNC_PATH = '/webhook/initial-sync';
+        const STATUS_PATH = '/webhook/sync-status';
+        const STORAGE_KEY = 'jobberToolsConfig';
+        
+        // Load saved settings
+        function loadSettings() {
+            const savedSettings = localStorage.getItem(STORAGE_KEY);
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                document.getElementById('n8nServerUrl').value = settings.n8nServerUrl || '';
+                updateWebhookUrl(settings.n8nServerUrl);
+            }
+        }
+        
+        // Save settings
+        function saveSettings() {
+            const n8nServerUrl = document.getElementById('n8nServerUrl').value.trim();
+            if (!n8nServerUrl) {
+                alert('Please enter your n8n server URL');
+                return;
+            }
+            
+            // Remove trailing slash if present
+            const formattedUrl = n8nServerUrl.endsWith('/') ? 
+                n8nServerUrl.substring(0, n8nServerUrl.length - 1) : 
+                n8nServerUrl;
+            
+            const settings = {
+                n8nServerUrl: formattedUrl
+            };
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            updateWebhookUrl(formattedUrl);
+            
+            alert('Settings saved successfully!');
+        }
+        
+        // Update webhook URL display
+        function updateWebhookUrl(serverUrl) {
+            const webhookUrlElement = document.getElementById('webhookUrl');
+            if (serverUrl) {
+                webhookUrlElement.textContent = `${serverUrl}${WEBHOOK_PATH}`;
+            } else {
+                webhookUrlElement.textContent = 'Please set your n8n server URL first';
+            }
+        }
+        
+        // Get server URL
+        function getServerUrl() {
+            const savedSettings = localStorage.getItem(STORAGE_KEY);
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                return settings.n8nServerUrl;
+            }
+            return null;
+        }
+        
+        // Run initial sync
+        async function runInitialSync() {
+            const serverUrl = getServerUrl();
+            if (!serverUrl) {
+                alert('Please set your n8n server URL first');
+                return;
+            }
+            
+            if (!confirm('This will clear and replace all data in the database. Are you sure you want to continue?')) {
+                return;
+            }
+            
+            const button = document.getElementById('initialSyncBtn');
+            const loading = document.getElementById('initialSyncLoading');
+            const status = document.getElementById('initialSyncStatus');
+            const statusTitle = document.getElementById('initialSyncTitle');
+            const statusDetails = document.getElementById('initialSyncDetails');
+            
+            // Disable button and show loading
+            button.disabled = true;
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${serverUrl}${INITIAL_SYNC_PATH}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        options: {
+                            includeArchived: false,
+                            daysBack: 365
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Show success message
+                status.className = 'status success';
+                statusTitle.textContent = 'Sync Completed Successfully!';
+                statusDetails.textContent = JSON.stringify(data, null, 2);
+                status.style.display = 'block';
+                
+                console.log('Success:', data);
+            } catch (error) {
+                // Show error message
+                status.className = 'status error';
+                statusTitle.textContent = 'Sync Failed';
+                statusDetails.textContent = 'Error: ' + error.message;
+                status.style.display = 'block';
+                
+                console.error('Error:', error);
+            } finally {
+                // Re-enable button and hide loading
+                button.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Refresh sync status
+        async function refreshSyncStatus() {
+            const serverUrl = getServerUrl();
+            if (!serverUrl) {
+                alert('Please set your n8n server URL first');
+                return;
+            }
+            
+            const button = document.getElementById('refreshStatusBtn');
+            const loading = document.getElementById('syncStatusLoading');
+            const content = document.getElementById('syncStatusContent');
+            
+            // Disable button and show loading
+            button.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${serverUrl}${STATUS_PATH}`, {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Create status table
+                let tableHtml = `
+                    <table>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Records</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                        </tr>
+                `;
+                
+                if (data && data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        tableHtml += `
+                            <tr>
+                                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                                <td>${log.sync_type || 'Webhook'}</td>
+                                <td>${log.total_records}</td>
+                                <td>${log.success ? 'Success' : 'Failed'}</td>
+                                <td>${log.sync_duration_seconds}s</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableHtml += `
+                        <tr>
+                            <td colspan="5">No sync logs found</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHtml += '</table>';
+                content.innerHTML = tableHtml;
+                
+            } catch (error) {
+                // Show error in content area
+                content.innerHTML = `<p class="error">Error loading sync status: ${error.message}</p>`;
+                console.error('Error:', error);
+            } finally {
+                // Re-enable button and hide loading
+                button.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Initialize on document load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved settings
+            loadSettings();
+            
+            // Add event listeners
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+            document.getElementById('initialSyncBtn').addEventListener('click', runInitialSync);
+            document.getElementById('refreshStatusBtn').addEventListener('click', refreshSyncStatus);
+        });
+    </script>
+</body>
+</html>
